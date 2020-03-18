@@ -13,6 +13,7 @@ class CameraViewController: UIViewController {
     
     // lazy because we dont need to instaniate right away, only once we ask and it will remember it long term
     lazy private var captureSession = AVCaptureSession()
+    lazy private var fileOutput = AVCaptureMovieFileOutput()
 
     @IBOutlet var recordButton: UIButton!
     @IBOutlet var cameraView: CameraPreviewView!
@@ -44,8 +45,14 @@ class CameraViewController: UIViewController {
             captureSession.sessionPreset = .hd1920x1080
         }
         
-        captureSession.commitConfiguration()
+        guard captureSession.canAddOutput(fileOutput) else {
+            preconditionFailure("Cannot write to disk")
+            // maybe no space, or maybe 4k not available
+        }
         
+        captureSession.addOutput(fileOutput)
+        
+        captureSession.commitConfiguration()
         
         cameraView.session = captureSession
     }
@@ -73,8 +80,16 @@ class CameraViewController: UIViewController {
     }
 
     @IBAction func recordButtonPressed(_ sender: Any) {
-
+        toggleRecording()
 	}
+    
+    private func toggleRecording() {
+        if fileOutput.isRecording {
+            fileOutput.stopRecording()
+        } else {
+            fileOutput.startRecording(to: newRecordingURL(), recordingDelegate: self)
+        }
+    }
 	
 	/// Creates a new file URL in the documents directory
 	private func newRecordingURL() -> URL {
@@ -88,4 +103,5 @@ class CameraViewController: UIViewController {
 		return fileURL
 	}
 }
+
 
