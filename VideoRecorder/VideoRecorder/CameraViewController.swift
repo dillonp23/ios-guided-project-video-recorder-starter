@@ -14,6 +14,8 @@ class CameraViewController: UIViewController {
     // lazy because we dont need to instaniate right away, only once we ask and it will remember it long term
     lazy private var captureSession = AVCaptureSession()
     lazy private var fileOutput = AVCaptureMovieFileOutput()
+    
+    var player: AVPlayer!
 
     @IBOutlet var recordButton: UIButton!
     @IBOutlet var cameraView: CameraPreviewView!
@@ -90,6 +92,23 @@ class CameraViewController: UIViewController {
             fileOutput.startRecording(to: newRecordingURL(), recordingDelegate: self)
         }
     }
+    
+    func playMovie(url: URL) {
+        player = AVPlayer(url: url)
+        
+        let playerLayer = AVPlayerLayer(player: player)
+        
+        // this method is quick and easy but shouldnt really do this way (57:00 into lecture)
+        var topRect = view.bounds
+        topRect.size.height /= 4
+        topRect.size.width /= 4
+        topRect.origin.y = view.layoutMargins.top
+        
+        playerLayer.frame = topRect
+        view.layer.addSublayer(playerLayer)
+        
+        player.play()
+    }
 	
 	/// Creates a new file URL in the documents directory
 	private func newRecordingURL() -> URL {
@@ -122,6 +141,8 @@ extension CameraViewController: AVCaptureFileOutputRecordingDelegate {
         print("Video url: \(outputFileURL)")
         
         updateViews()
+        
+        playMovie(url: outputFileURL)
     }
     
 }
