@@ -32,16 +32,32 @@ class CameraViewController: UIViewController {
 
     private func setUpCamera() {
         let camera = bestCamera()
+        let microphone = bestMicrophone()
         
         captureSession.beginConfiguration()
+        
+        // Check if we have microphone and camera devices available
         guard let cameraInput = try? AVCaptureDeviceInput(device: camera) else {
             preconditionFailure("Can't create an input from the camera but we should do something better than crashing")
         }
-        // Add input
+        
+        guard let microphoneInput = try? AVCaptureDeviceInput(device: microphone) else {
+            preconditionFailure("Can't create an input from the microphone but we should do something better than crashing")
+        }
+        
+        // Add video input
         guard captureSession.canAddInput(cameraInput) else {
-            preconditionFailure("This session can't handle this type of input")
+            preconditionFailure("This session can't handle this type of video input: \(cameraInput)")
         }
         captureSession.addInput(cameraInput)
+        
+        // Add audio input
+        guard captureSession.canAddInput(microphoneInput) else {
+            preconditionFailure("This session can't handle this type of microphone input: \(microphoneInput)")
+        }
+        captureSession.addInput(microphoneInput)
+        
+        
         
         if captureSession.canSetSessionPreset(.hd1920x1080) {
             captureSession.sessionPreset = .hd1920x1080
@@ -67,6 +83,14 @@ class CameraViewController: UIViewController {
             return device
         }
         preconditionFailure("No cameras on device match the specs that we need")
+    }
+    
+    private func bestMicrophone() -> AVCaptureDevice {
+        if let device = AVCaptureDevice.default(for: .audio) {
+            return device
+        }
+        
+        preconditionFailure("No microphones on device match the specs we need")
     }
     
     override func viewDidAppear(_ animated: Bool) {
