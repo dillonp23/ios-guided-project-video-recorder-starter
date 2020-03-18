@@ -7,8 +7,12 @@
 //
 
 import UIKit
+import AVFoundation
 
 class CameraViewController: UIViewController {
+    
+    // lazy because we dont need to instaniate right away, only once we ask and it will remember it long term
+    lazy private var captureSession = AVCaptureSession()
 
     @IBOutlet var recordButton: UIButton!
     @IBOutlet var cameraView: CameraPreviewView!
@@ -19,8 +23,42 @@ class CameraViewController: UIViewController {
 
 		// Resize camera preview to fill the entire screen
 		cameraView.videoPlayerLayer.videoGravity = .resizeAspectFill
+        
+        setUpCamera()
 	}
 
+    private func setUpCamera() {
+        let camera = bestCamera()
+        
+        captureSession.beginConfiguration()
+        guard let cameraInput = try? AVCaptureDeviceInput(device: camera) else {
+            preconditionFailure("Can't create an input from the camera but we should do something better than crashing")
+        }
+        // Add input
+        guard captureSession.canAddInput(cameraInput) else {
+            preconditionFailure("This session can't handle this type of input")
+        }
+        captureSession.addInput(cameraInput)
+        
+        if captureSession.canSetSessionPreset(.hd1920x1080) {
+            captureSession.sessionPreset = .hd1920x1080
+        }
+        
+        captureSession.commitConfiguration()
+        
+        
+        cameraView.session = captureSession
+    }
+    
+    private func bestCamera() -> AVCaptureDevice {
+        if let device = AVCaptureDevice.default(.builtInUltraWideCamera, for: .video, position: .back) {
+            return device
+        }
+        if let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) {
+            return device
+        }
+        preconditionFailure("No cameras on device match the specs that we need")
+    }
 
     @IBAction func recordButtonPressed(_ sender: Any) {
 
