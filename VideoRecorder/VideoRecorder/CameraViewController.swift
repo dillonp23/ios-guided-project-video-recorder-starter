@@ -28,7 +28,16 @@ class CameraViewController: UIViewController {
 		cameraView.videoPlayerLayer.videoGravity = .resizeAspectFill
         
         setUpCamera()
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapGesture(_:)))
+        view.addGestureRecognizer(tapGesture)
 	}
+    
+    @objc func handleTapGesture(_ tapGesture: UITapGestureRecognizer) {
+        if tapGesture.state == .ended {
+            playRecording()
+        }
+    }
 
     private func setUpCamera() {
         let camera = bestCamera()
@@ -132,6 +141,13 @@ class CameraViewController: UIViewController {
         view.layer.addSublayer(playerLayer)
         
         player.play()
+    }
+    
+    func playRecording() {
+        if let player = player {
+            player.seek(to: CMTime.zero) // N/D, D = 600 (a time interval)
+            player.play()
+        }
     }
 	
 	/// Creates a new file URL in the documents directory
